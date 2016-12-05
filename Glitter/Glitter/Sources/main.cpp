@@ -123,15 +123,17 @@ int main(int argc, char * argv[]) {
     glGenBuffers(1, &VBO);
     
     GLfloat vertices[] = {
-        0.5f,  0.5f, 0.0f,  // Top Right
-        0.5f, -0.5f, 0.0f,  // Bottom Right
-        -0.5f, -0.5f, 0.0f,  // Bottom Left
-        -0.5f,  0.5f, 0.0f   // Top Left
+        -0.75, 0.0, 0.0,
+        -0.50, 0.5, 0.0,
+        -0.25, 0.0, 0.0,
+         0.25, 0.0, 0.0,
+         0.50, 0.5, 0.0,
+         0.75, 0.0, 0.0
     };
     
     GLuint indices[] = {  // Note that we start from 0!
-        0, 1, 3,   // First Triangle
-        1, 2, 3    // Second Triangle
+        0, 1, 2,   // First Triangle
+        3, 4, 5    // Second Triangle
     };
     
     GLuint EBO;
