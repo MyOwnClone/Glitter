@@ -35,12 +35,13 @@ const GLchar *orangeFragmentShaderSource =
 "    color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 "}                  \n";
 
-const GLchar *yellowFragmentShaderSource =
+const GLchar *uniformColorFragmentShaderSource =
 "#version 330 core  \n"
 "out vec4 color;    \n"
+"uniform vec4 ourColor;\n"
 "void main()        \n"
 "{                  \n"
-"    color = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
+"    color = ourColor;\n"
 "}                  \n";
 
 int main(int argc, char * argv[]) {
@@ -71,6 +72,10 @@ int main(int argc, char * argv[]) {
         std::cout << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
+    
+    GLint nrAttributes;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+    std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << std::endl;
     
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -108,11 +113,11 @@ int main(int argc, char * argv[]) {
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
     
-    GLuint yellowFragmentShader;
+    GLuint uniformColorFragmentShader;
     
-    yellowFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(yellowFragmentShader, 1, &yellowFragmentShaderSource, NULL);
-    glCompileShader(yellowFragmentShader);
+    uniformColorFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(uniformColorFragmentShader, 1, &uniformColorFragmentShaderSource, NULL);
+    glCompileShader(uniformColorFragmentShader);
     
     GLuint orangeShaderProgram;
     orangeShaderProgram = glCreateProgram();
@@ -127,22 +132,22 @@ int main(int argc, char * argv[]) {
         std::cout << "ERROR::SHADER::LINKING_FAILED\n" << infoLog << std::endl;
     }
     
-    GLuint yellowShaderProgram;
-    yellowShaderProgram = glCreateProgram();
+    GLuint uniformColorShaderProgram;
+    uniformColorShaderProgram = glCreateProgram();
     
-    glAttachShader(yellowShaderProgram, vertexShader);
-    glAttachShader(yellowShaderProgram, yellowFragmentShader);
-    glLinkProgram(yellowShaderProgram);
+    glAttachShader(uniformColorShaderProgram, vertexShader);
+    glAttachShader(uniformColorShaderProgram, uniformColorFragmentShader);
+    glLinkProgram(uniformColorShaderProgram);
     
-    glGetProgramiv(yellowShaderProgram, GL_LINK_STATUS, &success);
+    glGetProgramiv(uniformColorShaderProgram, GL_LINK_STATUS, &success);
     if(!success) {
-        glGetProgramInfoLog(yellowShaderProgram, 512, NULL, infoLog);
+        glGetProgramInfoLog(uniformColorShaderProgram, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::LINKING_FAILED\n" << infoLog << std::endl;
     }
     
     glDeleteShader(vertexShader);
     glDeleteShader(orangeFragmentShader);
-    glDeleteShader(yellowFragmentShader);
+    glDeleteShader(uniformColorFragmentShader);
     
     GLuint VAO0, VAO1;
     glGenVertexArrays(1, &VAO0);
@@ -204,6 +209,9 @@ int main(int argc, char * argv[]) {
     // Rendering Loop
     while (glfwWindowShouldClose(window) == false)
     {
+        GLfloat timeValue = glfwGetTime();
+        GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
+        
         glfwPollEvents();
         
         // Background Fill Color
@@ -216,8 +224,10 @@ int main(int argc, char * argv[]) {
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
         
-        glUseProgram(yellowShaderProgram);
-        
+        GLint vertexColorLocation = glGetUniformLocation(uniformColorShaderProgram, "ourColor");
+        glUseProgram(uniformColorShaderProgram);
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+                
         glBindVertexArray(VAO1);
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
