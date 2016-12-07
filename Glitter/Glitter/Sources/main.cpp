@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     // When a user presses the escape key, we set the WindowShouldClose property to true,
@@ -137,10 +141,25 @@ int main(int argc, char * argv[]) {
     
     Shader shader("shader.vs", "shader.frag");
     
+    glm::mat4 trans;
+    trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+    
+    float mixKoef = 0.5;
+    
     // Rendering Loop
     while (glfwWindowShouldClose(window) == false)
     {
         glfwPollEvents();
+        
+        if (glfwGetKey(window, GLFW_KEY_UP) && mixKoef < 1.0)
+        {
+            mixKoef += 0.1;
+        }
+        else if (glfwGetKey(window, GLFW_KEY_DOWN) && mixKoef > 0)
+        {
+            mixKoef -= 0.1;
+        }
         
         // Background Fill Color
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -152,6 +171,11 @@ int main(int argc, char * argv[]) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
         glUniform1i(glGetUniformLocation(shader.Program, "ourTexture2"), 1);
+        
+        glUniform1f(glGetUniformLocation(shader.Program, "mixKoef"), mixKoef);
+        
+        GLuint transformLoc = glGetUniformLocation(shader.Program, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
         
         shader.Use();
         glBindVertexArray(VAO);
