@@ -180,6 +180,17 @@ int main(int argc, char * argv[]) {
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+        
+        trans = glm::mat4();
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::scale(trans, glm::vec3(sin((GLfloat)glfwGetTime()), sin((GLfloat)glfwGetTime()), sin((GLfloat)glfwGetTime())));
+        transformLoc = glGetUniformLocation(shader.Program, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        
+        shader.Use();
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
         // Flip Buffers and Draw
         glfwSwapBuffers(window);
