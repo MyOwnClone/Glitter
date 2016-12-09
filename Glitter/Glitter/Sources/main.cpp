@@ -24,6 +24,25 @@ bool keys[1024];
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
 
+GLfloat lastX = 400, lastY = 300;
+
+GLfloat pitch = 0;
+GLfloat yaw   = -90.0f;	// Yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right (due to how Eular angles work) so we initially rotate a bit to the left.
+
+bool firstMouse = true;
+
+GLfloat fov = (GLfloat)glm::radians(45.0);
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    if(fov >= 1.0f && fov <= 45.0f)
+        fov -= yoffset;
+    if(fov <= 1.0f)
+        fov = 1.0f;
+    if(fov >= 45.0f)
+        fov = 45.0f;
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     // When a user presses the escape key, we set the WindowShouldClose property to true,
@@ -35,6 +54,41 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         keys[key] = true;
     else if(action == GLFW_RELEASE)
         keys[key] = false;
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if(firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+    
+    GLfloat xoffset = xpos - lastX;
+    GLfloat yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+    
+    GLfloat sensitivity = 0.05;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+    
+    yaw   += xoffset;
+    pitch += yoffset;
+    
+    yaw = glm::mod( yaw + xoffset, 360.0f );
+    
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+    
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
 }
 
 void do_movement()
@@ -62,6 +116,7 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     auto window = glfwCreateWindow(mWidth, mHeight, "OpenGL", nullptr, nullptr);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Check for Valid Context
     if (window == nullptr) {
@@ -86,6 +141,8 @@ int main(int argc, char * argv[]) {
     glViewport(0, 0, width, height);
     
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback); 
     
     int textureWidth, textureHeight;
     unsigned char* image = SOIL_load_image("container.jpg", &textureWidth, &textureHeight, 0, SOIL_LOAD_RGB);
@@ -215,7 +272,7 @@ int main(int argc, char * argv[]) {
         do_movement();
         
         glm::mat4 projection;
-        projection = glm::perspective((GLfloat)glm::radians(45.0), width / (GLfloat) height, 0.1f, 100.0f);
+        projection = glm::perspective(fov, width / (GLfloat) height, 0.1f, 100.0f);
         
         glfwPollEvents();
         
@@ -242,10 +299,6 @@ int main(int argc, char * argv[]) {
         
         for(GLuint i = 0; i < 10; i++)
         {
-            GLfloat radius = 10.0f;
-            GLfloat camX = sin(glfwGetTime()) * radius;
-            GLfloat camZ = cos(glfwGetTime()) * radius;
-            
             glm::mat4 model;
             model = glm::translate(model, cubePositions[i]);
             GLfloat angle = 20.0f * i;
