@@ -66,7 +66,41 @@ public:
     // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix()
     {
-        return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
+        //return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
+        return GetLookAt(this->Position, this->Position + this->Front, this->Up);
+    }
+    
+    glm::mat4 GetLookAt(glm::vec3 position, glm::vec3 target, glm::vec3 up)
+    {
+        glm::vec3 zaxis = glm::normalize(position - target);
+        glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
+        glm::vec3 yaxis = glm::normalize(glm::cross(zaxis, xaxis));
+        
+        glm::mat4 basis;
+        
+        basis[0][0] = xaxis.x;
+        basis[1][0] = xaxis.y;
+        basis[2][0] = xaxis.z;
+        
+        basis[0][1] = yaxis.x;
+        basis[1][1] = yaxis.y;
+        basis[2][1] = yaxis.z;
+        
+        basis[0][2] = zaxis.x;
+        basis[1][2] = zaxis.y;
+        basis[2][2] = zaxis.z;
+        
+        basis[3][3] = 1;
+        
+        glm::mat4 pos;
+        
+        pos[0][0] = pos[1][1] = pos[2][2] = pos[3][3] = 1;
+        
+        pos[3][0] = -position.x;
+        pos[3][1] = -position.y;
+        pos[3][2] = -position.z;
+        
+        return basis * pos;
     }
     
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -83,9 +117,9 @@ public:
         if (direction == BACKWARD)
             this->Position -= fixedFront * velocity;
         if (direction == LEFT)
-            this->Position -= fixedFront * velocity;
+            this->Position -= glm::normalize(glm::cross(fixedFront, WorldUp)) * velocity;
         if (direction == RIGHT)
-            this->Position += fixedFront * velocity;
+            this->Position += glm::normalize(glm::cross(fixedFront, WorldUp)) * velocity;
     }
     
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
