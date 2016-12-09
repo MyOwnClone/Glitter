@@ -73,14 +73,19 @@ public:
     void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime)
     {
         GLfloat velocity = this->MovementSpeed * deltaTime;
+        
+        glm::vec3 fixedFront = this->Front;
+        
+        fixedFront.y = 0;
+        
         if (direction == FORWARD)
-            this->Position += this->Front * velocity;
+            this->Position += fixedFront * velocity;
         if (direction == BACKWARD)
-            this->Position -= this->Front * velocity;
+            this->Position -= fixedFront * velocity;
         if (direction == LEFT)
-            this->Position -= this->Right * velocity;
+            this->Position -= fixedFront * velocity;
         if (direction == RIGHT)
-            this->Position += this->Right * velocity;
+            this->Position += fixedFront * velocity;
     }
     
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
