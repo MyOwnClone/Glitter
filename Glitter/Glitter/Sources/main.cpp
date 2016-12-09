@@ -15,12 +15,41 @@
 #include <cstdio>
 #include <cstdlib>
 
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+bool keys[1024];
+
+GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
+GLfloat lastFrame = 0.0f;  	// Time of last frame
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     // When a user presses the escape key, we set the WindowShouldClose property to true,
     // closing the application
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+    
+    if(action == GLFW_PRESS)
+        keys[key] = true;
+    else if(action == GLFW_RELEASE)
+        keys[key] = false;
+}
+
+void do_movement()
+{
+    // Camera controls
+    GLfloat cameraSpeed = 5.0f * deltaTime;
+    
+    if(keys[GLFW_KEY_W])
+        cameraPos += cameraSpeed * cameraFront;
+    if(keys[GLFW_KEY_S])
+        cameraPos -= cameraSpeed * cameraFront;
+    if(keys[GLFW_KEY_A])
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if(keys[GLFW_KEY_D])
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
 int main(int argc, char * argv[]) {
@@ -179,6 +208,12 @@ int main(int argc, char * argv[]) {
     // Rendering Loop
     while (glfwWindowShouldClose(window) == false)
     {
+        GLfloat currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        
+        do_movement();
+        
         glm::mat4 projection;
         projection = glm::perspective((GLfloat)glm::radians(45.0), width / (GLfloat) height, 0.1f, 100.0f);
         
@@ -199,15 +234,17 @@ int main(int argc, char * argv[]) {
         
         shader.Use();
         
+        glm::mat4 view;
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        
         glBindVertexArray(VAO);
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        
         for(GLuint i = 0; i < 10; i++)
         {
             GLfloat radius = 10.0f;
             GLfloat camX = sin(glfwGetTime()) * radius;
             GLfloat camZ = cos(glfwGetTime()) * radius;
-            glm::mat4 view;
-            view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-            glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
             
             glm::mat4 model;
             model = glm::translate(model, cubePositions[i]);
